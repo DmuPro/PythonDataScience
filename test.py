@@ -5,7 +5,7 @@ import math
 import json
 import urllib.request
 import plotly.express as px
-
+from urllib.request import urlopen
 from plotly.subplots import make_subplots
 
 def readUrlJson(url):
@@ -72,6 +72,8 @@ if __name__ == "__main__":
                             row=1, col=1)
     fig.add_trace(data,
                             row=1, col=2)
+
+
     plotly.offline.plot(fig, filename='fig.html', auto_open=True, include_plotlyjs='cdn')
     
     """
@@ -85,5 +87,20 @@ if __name__ == "__main__":
     plotly.offline.plot(fig, filename='historigram.html', auto_open=True, include_plotlyjs='cdn')
 
 
+    
+    
+    #Génère la carte 
+    """
+    Lien de la documentation https://plotly.com/python/choropleth-maps/ 
+    """
+    with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
+        counties = json.load(response)
 
-
+    df = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/fips-unemp-16.csv",dtype={"fips": str})
+    subfig = px.choropleth(df, geojson=counties, locations='fips', color='unemp',
+                           color_continuous_scale="Viridis",
+                           range_color=(0, 12),
+                           scope="usa",
+                           labels={'unemp':'unemployment rate'}
+    )
+    plotly.offline.plot(fig, filename='grandefigure.html', auto_open=True, include_plotlyjs='cdn')
