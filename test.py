@@ -37,10 +37,13 @@ if __name__ == "__main__":
     master_df = readUrlJson(allInsertProfesionnelURL['master'])
 
     frames = [licence_df,doctorat_df,DUT_df]
-    df = pd.concat(frames)
 
+    df = pd.concat(frames)
+    df['insertion'] = df['taux_dinsertion'] + df['taux_d_insertion'] + df['taux_insertion']
     df.to_csv (r'export_dataframe.csv', index = False, header=True)
     #Les années sont des strings ici, à ne pas comparer avec des int !
+    df['insertion'] = df['taux_dinsertion'] + df['taux_d_insertion']
+    print(df['insertion'])
     
     traces = go.Scatter(
         x = df['annee'],
@@ -51,6 +54,7 @@ if __name__ == "__main__":
             size = 0 if df['taux_dinsertion'] is not int else df['taux_dinsertion']
         )
     )
+
     
     data = traces
     layout = go.Layout(title="Taux_insertion/Annee",
@@ -82,8 +86,11 @@ if __name__ == "__main__":
     """
     #Génère des données aléatoires
     licence_df = px.data.tips()
-
-    fig = px.histogram(licence_df, x="total_bill", nbins=20)
+    print(licence_df)
+    print(data)
+    # otherdata = df.query("discipline == 'Informatique'")
+    # print(otherdata)
+    fig = px.histogram(df, x="annee",y="taux_dinsertion", nbins=20)
     plotly.offline.plot(fig, filename='historigram.html', auto_open=True, include_plotlyjs='cdn')
 
 
