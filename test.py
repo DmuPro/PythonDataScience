@@ -38,12 +38,15 @@ if __name__ == "__main__":
 
     frames = [licence_df,doctorat_df,DUT_df]
 
-    df = pd.concat(frames)
-    df['insertion'] = df['taux_dinsertion'] + df['taux_d_insertion'] + df['taux_insertion']
+    df = pd.concat(frames,ignore_index=True)
+    
+    df['taux_dinsertion'].fillna(df['taux_d_insertion'],inplace=True)
+    df['taux_dinsertion'].fillna(df['taux_insertion'],inplace=True)
+    print(df)
     df.to_csv (r'export_dataframe.csv', index = False, header=True)
     #Les années sont des strings ici, à ne pas comparer avec des int !
-    df['insertion'] = df['taux_dinsertion'] + df['taux_d_insertion']
-    print(df['insertion'])
+
+    print(df['taux_dinsertion'])
     
     traces = go.Scatter(
         x = df['annee'],
