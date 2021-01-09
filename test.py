@@ -42,7 +42,6 @@ if __name__ == "__main__":
     
     df['taux_dinsertion'].fillna(df['taux_d_insertion'],inplace=True)
     df['taux_dinsertion'].fillna(df['taux_insertion'],inplace=True)
-    print(df)
     df.to_csv (r'export_dataframe.csv', index = False, header=True)
     #Les années sont des strings ici, à ne pas comparer avec des int !
 
@@ -93,9 +92,9 @@ if __name__ == "__main__":
     print(data)
     # otherdata = df.query("discipline == 'Informatique'")
     # print(otherdata)
-    fig = px.histogram(df, x="annee",y="taux_dinsertion", nbins=20)
+    fig = px.histogram(df, x="annee",y="taux_dinsertion", histfunc='avg')
     plotly.offline.plot(fig, filename='historigram.html', auto_open=True, include_plotlyjs='cdn')
-
+    
 
     
     
