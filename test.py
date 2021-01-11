@@ -26,34 +26,43 @@ def readUrlJson(url):
 
 
 if __name__ == "__main__":
-    #Toutes les URLS des insertions professionnelles
-    allInsertProfesionnelURL = {"master":"https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-insertion_professionnelle-master_donnees_nationales&q=&rows=22&facet=annee&facet=diplome&facet=situation&facet=genre&facet=disciplines&facet=cle_disc",
-              "licencePro":"https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-insertion_professionnelle-lp&q=&rows=10&facet=annee&facet=diplome&facet=numero_de_l_etablissement&facet=etablissement&facet=academie&facet=domaine&facet=code_de_la_discipline&facet=discipline&facet=situation&facet=cle_etab&facet=cle_disc&facet=id_paysage",
-              "doctorat":"https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=insertion-professionnelle-des-diplomes-de-doctorat-par-ensemble&q=&rows=10&sort=-annee&facet=annee&facet=situation&facet=disca",
-              "DUT":"https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-insertion_professionnelle-dut_donnees_nationales&q=&rows=10&facet=annee&facet=diplome&facet=situation&facet=genre&facet=disciplines&facet=secteur_disciplinaire&facet=cle_disc"}
-    licence_df = readUrlJson(allInsertProfesionnelURL['licencePro'])
-    doctorat_df = readUrlJson(allInsertProfesionnelURL['doctorat'])
-    DUT_df = readUrlJson(allInsertProfesionnelURL['DUT'])
-    master_df = readUrlJson(allInsertProfesionnelURL['master'])
+    #voe_tot
+    parcoursSup = [readUrlJson("https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri"),
+                   readUrlJson("https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup-2018&q=&sort=tri&facet=session&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri"),
+                   readUrlJson("https://data.education.gouv.fr/api/records/1.0/search/?dataset=apb-voeux-de-poursuite-detude-et-admissions&q=&facet=session&facet=cod_uai&facet=g_ea_lib_vx&facet=lib_dep&facet=acad_mies&facet=lib_reg&facet=fili&facet=form_lib_voe_acc&facet=fil_lib_voe_acc")]
+    parcoursSup_df = pd.concat(parcoursSup,ignore_index=True)
+    parcoursSup_df.to_csv (r'export_parcoursSUp.csv', index = False, header=True)
+    allInsertProfesionnelURL = [readUrlJson("https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-insertion_professionnelle-lp&q=&rows=10&facet=annee&facet=diplome&facet=numero_de_l_etablissement&facet=etablissement&facet=academie&facet=domaine&facet=code_de_la_discipline&facet=discipline&facet=situation&facet=cle_etab&facet=cle_disc&facet=id_paysage"),
+                                readUrlJson("https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=insertion-professionnelle-des-diplomes-de-doctorat-par-ensemble&q=&rows=10&sort=-annee&facet=annee&facet=situation&facet=disca"),
+                                readUrlJson("https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-insertion_professionnelle-dut_donnees_nationales&q=&rows=10&facet=annee&facet=diplome&facet=situation&facet=genre&facet=disciplines&facet=secteur_disciplinaire&facet=cle_disc"),
+                                readUrlJson("https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-insertion_professionnelle-master_donnees_nationales&q=&rows=22&facet=annee&facet=diplome&facet=situation&facet=genre&facet=disciplines&facet=cle_disc")
+                                ]
 
-    frames = [licence_df,doctorat_df,DUT_df]
-
-    df = pd.concat(frames,ignore_index=True)
+    df = pd.concat(allInsertProfesionnelURL,ignore_index=True)
     
     df['taux_dinsertion'].fillna(df['taux_d_insertion'],inplace=True)
     df['taux_dinsertion'].fillna(df['taux_insertion'],inplace=True)
     df.to_csv (r'export_dataframe.csv', index = False, header=True)
     #Les années sont des strings ici, à ne pas comparer avec des int !
 
-    print(df['taux_dinsertion'])
+    print(df)
     
     traces = go.Scatter(
         x = df['annee'],
         y = df['taux_dinsertion'],
         mode = 'markers',
-        text = df['diplome'] + " " + licence_df['domaine'],
+        text = df['diplome'] + " " + df['domaine'],
         marker = dict(
             size = 0 if df['taux_dinsertion'] is not int else df['taux_dinsertion']
+        )
+    )
+    traces_popularite = go.Scatter(
+        x = parcoursSup_df['session'],
+        y = parcoursSup_df['voe_tot'],
+        mode = 'markers',
+        text = parcoursSup_df['fil_lib_voe_acc'] + " " + parcoursSup_df['form_lib_voe_acc'],
+        marker = dict(
+            size = [math.log(int(elem))*10 for elem in parcoursSup_df['voe_tot']]
         )
     )
 
@@ -76,7 +85,7 @@ if __name__ == "__main__":
     fig = make_subplots(rows=1, cols=2)
     fig.add_trace(data,
                             row=1, col=1)
-    fig.add_trace(data,
+    fig.add_trace(traces_popularite,
                             row=1, col=2)
 
 
