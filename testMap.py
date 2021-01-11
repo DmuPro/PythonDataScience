@@ -16,6 +16,9 @@ def readUrlJson(url):
     return  pd.DataFrame(jsonDataPrecise)
 
 etablissement_df = readUrlJson("https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri")
+#etablissement_df_2018 = readUrlJson("https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup-2018&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri")
+#etablissement_df = pd.concat([etablissement_df_2018, etablissement_df_2019])
+
 etablissement_df.to_csv(r'df_parcoursup.csv', index = False, header=True)
 etablissement_df[['lat','lon']] = pd.DataFrame(etablissement_df.g_olocalisation_des_formations.tolist(), index= etablissement_df.index)
 print(etablissement_df)

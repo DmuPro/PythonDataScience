@@ -1,0 +1,25 @@
+body{
+    font-size: 1.3em;
+}
+
+p{
+    text-indent: 15px;
+}
+
+li{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    list-style-type: square;
+    list-style: inside;
+}
+
+#sidebar{
+    background-color: #4A154B;
+    color: white;
+    text-align: center;
+    width: 250px;
+}
+
+#sidebar a{
+    color: #EEEEFF;
+}
