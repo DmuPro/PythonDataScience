@@ -18,8 +18,8 @@ session_visible = 2018
 sessions = map_data["session"].unique()
 map_data_sessions = {session:map_data.query("session == @session") for session in sessions}
 
-map_fig = px.scatter_mapbox(map_data_sessions[f'{session_visible}'], lat="lat", lon="lon", hover_name="g_ea_lib_vx", hover_data=["acad_mies"],
-                        color_discrete_sequence=["fuchsia"], zoom=4.5, height=500)
+map_fig = px.scatter_mapbox(map_data_sessions[f'{session_visible}'], lat="lat", lon="lon", hover_name="g_ea_lib_vx", hover_data=["acad_mies", "voe_tot"],
+                        color_discrete_sequence=["fuchsia"], zoom=4.5, height=500, size='voe_tot')
 map_fig.update_layout(mapbox_style="open-street-map")
 map_fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 
@@ -112,8 +112,8 @@ if __name__ == '__main__':
         [Input(component_id='year-slider', component_property='value')]
     )
     def update_figure(input_value):
-        map = px.scatter_mapbox(map_data_sessions[f'{input_value}'], lat="lat", lon="lon", hover_name="g_ea_lib_vx", hover_data=["acad_mies"],
-                        color_discrete_sequence=["fuchsia"], zoom=4.5, height=500)
+        map = px.scatter_mapbox(map_data_sessions[f'{input_value}'], lat="lat", lon="lon", hover_name="g_ea_lib_vx", hover_data=["acad_mies", "voe_tot"],
+                        color_discrete_sequence=["fuchsia"], zoom=4.5, height=500, size='voe_tot')
         map.update_layout(mapbox_style="open-street-map")
         map.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
         return [map]
