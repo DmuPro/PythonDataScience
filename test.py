@@ -7,6 +7,7 @@ import urllib.request
 import plotly.express as px
 from urllib.request import urlopen
 from plotly.subplots import make_subplots
+import plotly.io as pio
 
 def readUrlJson(url):
     """Renvoie un dataframe à partir d'une URL renvoyant un JSON
@@ -46,15 +47,18 @@ if __name__ == "__main__":
     #Les années sont des strings ici, à ne pas comparer avec des int !
 
     print(df)
+
+
+   
     
     traces = go.Scatter(
-        x = df['annee'],
-        y = df['taux_dinsertion'],
+        x = df['domaine'],
+        y = df['annee'],
         mode = 'markers',
         text = df['diplome'] + " " + df['domaine'],
         marker = dict(
             size = 0 if df['taux_dinsertion'] is not int else df['taux_dinsertion']
-        )
+        ),
     )
     traces_popularite = go.Scatter(
         x = parcoursSup_df['session'],
@@ -64,6 +68,7 @@ if __name__ == "__main__":
         marker = dict(
             size = [math.log(int(elem))*10 for elem in parcoursSup_df['voe_tot']]
         )
+        
     )
 
     
@@ -89,6 +94,7 @@ if __name__ == "__main__":
                             row=1, col=2)
 
 
+    #fig = px.pie(parcoursSup_df, values='voe_tot', names='fil_lib_voe_acc', title='Insertion par domaine')
     plotly.offline.plot(fig, filename='fig.html', auto_open=True, include_plotlyjs='cdn')
     
     """
@@ -104,21 +110,25 @@ if __name__ == "__main__":
     fig = px.histogram(df, x="annee",y="taux_dinsertion", histfunc='avg')
     plotly.offline.plot(fig, filename='historigram.html', auto_open=True, include_plotlyjs='cdn')
     
-
-    
-    
-    #Génère la carte 
-    """
-    Lien de la documentation https://plotly.com/python/choropleth-maps/ 
-    """
-    with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
-        counties = json.load(response)
-
-    df = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/fips-unemp-16.csv",dtype={"fips": str})
-    subfig = px.choropleth(df, geojson=counties, locations='fips', color='unemp',
-                           color_continuous_scale="Viridis",
-                           range_color=(0, 12),
-                           scope="usa",
-                           labels={'unemp':'unemployment rate'}
+    data = [dict(
+        type = 'scatter',
+        x = df['domaine'],
+        y = df['annee'],
+        mode = 'markers',
+        transforms = [dict(
+            type = 'aggregate',
+            groups = df['domaine'],
+            aggregations = [dict(
+                target = 'y', func = 'avg', enabled = True),
+                ]
+            )]
+    )]
+    layout = dict(
+        title = '<b>Gapminder</b><br>2007 Average GDP Per Cap & Life Exp. by Continent',
+        yaxis = dict(
+            type = 'log'
+        )
     )
-    plotly.offline.plot(fig, filename='grandefigure.html', auto_open=True, include_plotlyjs='cdn')
+
+    fig_dict = dict(data=data, layout=layout)
+    pio.show(fig_dict, validate=False)
