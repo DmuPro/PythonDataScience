@@ -7,25 +7,50 @@ from dash.dependencies import Input, Output
 import lib
 
 #
-# Données
+### Données
 #
 
-# Map
-map_data = lib.getMapData()
+url_dict = {
+    'etablissement_df_2018':'https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup-2018&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri',
+    'etablissement_df_2019':'https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri',
+}
+datasets = lib.loadResources(url_dict)
+
+### Parcoursup ###
+parcoursup_data = lib.getParcoursupData(datasets['etablissement_df_2018'], datasets['etablissement_df_2019'])
+sessions = parcoursup_data["session"].unique()
+
+map_data_sessions = lib.group_by_years(lib.getMapData(parcoursup_data), sessions) # Map (Nombre de voeux par établissements)
+barGraph_data_sessions = lib.group_by_years(lib.getBarGraphData(parcoursup_data), sessions) # Graphe en barre (Nombre de voeux par filière)
+
+#
+### Figures
+#
 
 session_visible = 2018
-# On crée un dictionnaire séparant le dataframe par dates de session
-sessions = map_data["session"].unique()
-map_data_sessions = {session:map_data.query("session == @session") for session in sessions}
 
-map_fig = px.scatter_mapbox(map_data_sessions[f'{session_visible}'], lat="lat", lon="lon", hover_name="g_ea_lib_vx", hover_data=["acad_mies", "voe_tot"],
-                        color_discrete_sequence=["fuchsia"], zoom=4.5, height=500, size='voe_tot')
+# Map (Nombre de voeux par établissements)
+
+map_fig = px.scatter_mapbox(
+    map_data_sessions[f'{session_visible}'],
+    lat="lat",
+    lon="lon",
+    hover_name="g_ea_lib_vx",
+    hover_data=["acad_mies", "voe_tot"],
+    color_discrete_sequence=["fuchsia"],
+    zoom=4.5,
+    height=500,
+    size='voe_tot'
+)
 map_fig.update_layout(mapbox_style="open-street-map")
 map_fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 
+# Diagramme en barres (Nombre de voeux par filière)
+
+bar_graph_fig = px.bar(barGraph_data_sessions[f'{session_visible}'], x='fil_lib_voe_acc', y='voe_tot')
 
 #
-# Main
+### Main
 #
 
 if __name__ == '__main__':
@@ -94,6 +119,19 @@ if __name__ == '__main__':
                             )
                         ],
                         style={'margin': '10px 40px 10px 40px'}
+                    ),
+                    html.Div(
+                        children=[
+                            dcc.Graph(
+                                id='bar_graph',
+                                figure=bar_graph_fig
+                            ),
+                            html.P(
+                                children="Taux d'insertion de chaque filière",
+                                style={'margin-top': '10px'}
+                            )
+                        ],
+                        style={'margin': '10px 40px 10px 40px'}
                     )
                 ],
                 style={'width': '100%'}
@@ -103,23 +141,25 @@ if __name__ == '__main__':
     )
 
     #
-    # CALLBACKS
+    ### CALLBACKS
     #
 
-    # Modifie la figure 'map' en fonction de la valeur du slider
+    # Modifie les figure 'map' et 'bar_graph' en fonction de la valeur du slider
     @app.callback(
-        [Output(component_id='map', component_property='figure')],
+        [Output(component_id='map', component_property='figure'),
+        Output(component_id='bar_graph', component_property='figure')],
         [Input(component_id='year-slider', component_property='value')]
     )
-    def update_figure(input_value):
+    def update_graphs(input_value):
         map = px.scatter_mapbox(map_data_sessions[f'{input_value}'], lat="lat", lon="lon", hover_name="g_ea_lib_vx", hover_data=["acad_mies", "voe_tot"],
                         color_discrete_sequence=["fuchsia"], zoom=4.5, height=500, size='voe_tot')
         map.update_layout(mapbox_style="open-street-map")
         map.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-        return [map]
+        barGraph = px.bar(barGraph_data_sessions[f'{input_value}'], x='fil_lib_voe_acc', y='voe_tot')
+        return [map,barGraph]
 
     #
-    # Lancement du serveur
+    ### Lancement du serveur
     #
 
     app.run_server(debug=True)

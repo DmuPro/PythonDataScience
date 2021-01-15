@@ -15,20 +15,48 @@ def readUrlJson(url):
     jsonDataPrecise = [x['fields'] for x in jsonData['records']]
     return  pd.DataFrame(jsonDataPrecise)
 
-def getMapData():
+def loadResources(url_dict):
+    """Renvoie un dictionnaire de dataframe à partir des liens fournis en entrée
+
+    Args:
+        url_dict [Dict]: Clé= Donnée ciblée, Valeur= Url
+
+    Returns:
+        {key: Dataframe} [Dict]: Sets de données associés à un nom
     """
-    Renvoie une figure de type scatter_mapbox affichant le nombre de chaque formation
+    return {key:readUrlJson(url) for key,url in url_dict.items()}
+
+def getParcoursupData(etablissement_df_2018, etablissement_df_2019):
+    """Renvoie une figure de type scatter_mapbox affichant le nombre de chaque formation
+    
+    Args:
+        etablissement_df_2018 ([DataFrame]): [Données parcoursup des établissements en 2018]
+        etablissement_df_2019 ([DataFrame]): [Données parcoursup des établissements en 2019]
     """
-    etablissement_df_2019 = readUrlJson("https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri")
-    etablissement_df_2018 = readUrlJson("https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup-2018&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri")
     etablissement_df = pd.concat([etablissement_df_2018, etablissement_df_2019])
-    etablissement_df = etablissement_df.groupby(['g_ea_lib_vx','session']).aggregate({
+    return etablissement_df
+
+def group_by_years(df, year_list):
+    return {session:df.query("session == @session") for session in year_list}
+
+def getMapData(parcoursup_data):
+    map_data = parcoursup_data.groupby(['g_ea_lib_vx','session']).aggregate({
         'voe_tot':'sum',
         'g_olocalisation_des_formations':'first',
         'session':'first',
         'g_ea_lib_vx':'first',
         'acad_mies':'first'
-    }) ### Ajouter les attributs necessaires au fur et à mesure ###
+    })
 
-    etablissement_df[['lat','lon']] = pd.DataFrame(etablissement_df.g_olocalisation_des_formations.tolist(), index= etablissement_df.index)
-    return etablissement_df
+    map_data[['lat','lon']] = pd.DataFrame(map_data.g_olocalisation_des_formations.tolist(), index= map_data.index)
+
+    # On crée un dictionnaire séparant le dataframe par dates de session
+    return map_data
+
+def getBarGraphData(parcoursup_data):
+    barGraph_data = parcoursup_data.groupby(['fil_lib_voe_acc','session']).aggregate({
+        'voe_tot':'sum',
+        'fil_lib_voe_acc':'first',
+        'session':'first',
+    })
+    return barGraph_data

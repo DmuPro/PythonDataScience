@@ -1,11 +1,3 @@
-# PythonDataScience
-
-Sujet Python:
-
-STATISTIQUE SUR L'EFFECTIF DE CHAQUE FORMATION AFIN DE DETERMINER LA FILIERE LA PLUS POPULAIRE EN FRANCE
-STATISTIQUE SUR LE TAUX D'INSERTION DE CHAQUE FORMATION
-DETERMINER LA FORMATION AVEC LE + DE TAUX D'INSERTION
----
 # Projet de visualisation de données
 Mini-Projet visant à fournir des représentations graphiques de données publiques selon un sujet choisi, le sujet de ce projet étant:
 
@@ -21,7 +13,7 @@ Mini-Projet visant à fournir des représentations graphiques de données publiq
 * Python 3.8.3
 * Pandas 1.1.4
 * Plotly 4.13.0
-* Dash 1.17.0
+* Dash 1.17.0  
 `pip install 'package==version'`
 
 ## Guide développeur
