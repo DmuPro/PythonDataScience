@@ -23,14 +23,19 @@ def readUrlJson(url):
 
 
 
-
+def getParcoursSupData(*insertiondf):
+    """
+    Renvoie une dataframe contenant toutes les données de l'opendata de parcoursup
+    """
+    parcoursSup_df = pd.concat(insertiondf,ignore_index=True)
+    return parcoursSup_df
 
 
 if __name__ == "__main__":
     #voe_tot
-    parcoursSup = [readUrlJson("https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri"),
+    parcoursSup = (readUrlJson("https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri"),
                    readUrlJson("https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup-2018&q=&sort=tri&facet=session&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri"),
-                   readUrlJson("https://data.education.gouv.fr/api/records/1.0/search/?dataset=apb-voeux-de-poursuite-detude-et-admissions&q=&facet=session&facet=cod_uai&facet=g_ea_lib_vx&facet=lib_dep&facet=acad_mies&facet=lib_reg&facet=fili&facet=form_lib_voe_acc&facet=fil_lib_voe_acc")]
+                   readUrlJson("https://data.education.gouv.fr/api/records/1.0/search/?dataset=apb-voeux-de-poursuite-detude-et-admissions&q=&facet=session&facet=cod_uai&facet=g_ea_lib_vx&facet=lib_dep&facet=acad_mies&facet=lib_reg&facet=fili&facet=form_lib_voe_acc&facet=fil_lib_voe_acc"))
     parcoursSup_df = pd.concat(parcoursSup,ignore_index=True)
     parcoursSup_df.to_csv (r'export_parcoursSUp.csv', index = False, header=True)
     allInsertProfesionnelURL = [readUrlJson("https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-insertion_professionnelle-lp&q=&rows=10&facet=annee&facet=diplome&facet=numero_de_l_etablissement&facet=etablissement&facet=academie&facet=domaine&facet=code_de_la_discipline&facet=discipline&facet=situation&facet=cle_etab&facet=cle_disc&facet=id_paysage"),
@@ -40,25 +45,47 @@ if __name__ == "__main__":
                                 ]
 
     df = pd.concat(allInsertProfesionnelURL,ignore_index=True)
+
     
     df['taux_dinsertion'].fillna(df['taux_d_insertion'],inplace=True)
     df['taux_dinsertion'].fillna(df['taux_insertion'],inplace=True)
     df.to_csv (r'export_dataframe.csv', index = False, header=True)
+    dfV2 = df
+    df = df.query("taux_dinsertion != 'ns' & emplois_stables != 'ns'")
+    df = df.assign(taux_dinsertion=df['taux_dinsertion'].astype('float64'))
+    df = df.assign(emplois_stables=df['emplois_stables'].astype('float64'))
     #Les années sont des strings ici, à ne pas comparer avec des int !
 
-    print(df)
 
-
-   
+    df = df.groupby(['domaine','annee']).aggregate({
+        'taux_dinsertion':'mean',
+        'emplois_stables':'mean',
+        'annee':'first',
+        'diplome':'first',
+        'domaine':'first'
+    })
     
-    traces = go.Scatter(
-        x = df['domaine'],
-        y = df['annee'],
+    domaines = df['domaine'].unique()
+    domaines_df = [df.query(f"domaine=='{domaine}'") for domaine in domaines]
+
+    traces = [go.Scatter(
+        x = domaine['annee'],
+        y = domaine['taux_dinsertion'],
         mode = 'markers',
-        text = df['diplome'] + " " + df['domaine'],
+        text = domaine['diplome'] + " " + domaine['domaine'],
+        name = domaine['domaine'].iloc[0],
         marker = dict(
-            size = 0 if df['taux_dinsertion'] is not int else df['taux_dinsertion']
-        ),
+            size = [element/5 for element in domaine['taux_dinsertion']]
+            )
+        
+    ) for domaine in domaines_df]
+
+    traces_stable = go.Scatter(
+        x = df['annee'],
+        y = df['emplois_stables'],
+        mode = 'markers',
+        text = df['diplome'] + " " + df['domaine']
+        
     )
     traces_popularite = go.Scatter(
         x = parcoursSup_df['session'],
@@ -71,30 +98,27 @@ if __name__ == "__main__":
         
     )
 
+
     
     data = traces
     layout = go.Layout(title="Taux_insertion/Annee",
                         xaxis=dict(
-                            title='insertion',
+                            title='annee',
                             ticklen=5,
                             zeroline=False,
                             gridwidth=2,
                         ),
                         yaxis=dict(
-                            title='annee',
+                            title='insertion',
                             ticklen=5,
                             zeroline=False,
                             gridwidth=2,
                         ))
-
-    fig = make_subplots(rows=1, cols=2)
-    fig.add_trace(data,
-                            row=1, col=1)
-    fig.add_trace(traces_popularite,
-                            row=1, col=2)
-
-
-    #fig = px.pie(parcoursSup_df, values='voe_tot', names='fil_lib_voe_acc', title='Insertion par domaine')
+    
+    fig = go.Figure(data = data,layout = layout)
+    fig.show()
+    fig = px.pie(parcoursSup_df, values='voe_tot', names='fil_lib_voe_acc', title='Insertion par domaine')
+    fig.show()
     plotly.offline.plot(fig, filename='fig.html', auto_open=True, include_plotlyjs='cdn')
     
     """
@@ -103,32 +127,25 @@ if __name__ == "__main__":
     """
     #Génère des données aléatoires
     licence_df = px.data.tips()
-    print(licence_df)
-    print(data)
     # otherdata = df.query("discipline == 'Informatique'")
     # print(otherdata)
-    fig = px.histogram(df, x="annee",y="taux_dinsertion", histfunc='avg')
-    plotly.offline.plot(fig, filename='historigram.html', auto_open=True, include_plotlyjs='cdn')
-    
-    data = [dict(
-        type = 'scatter',
-        x = df['domaine'],
-        y = df['annee'],
-        mode = 'markers',
-        transforms = [dict(
-            type = 'aggregate',
-            groups = df['domaine'],
-            aggregations = [dict(
-                target = 'y', func = 'avg', enabled = True),
-                ]
-            )]
-    )]
-    layout = dict(
-        title = '<b>Gapminder</b><br>2007 Average GDP Per Cap & Life Exp. by Continent',
+    df_histogram = dfV2.loc[dfV2['domaine'] == "Droit, économie et gestion"]
+    df_histogram.to_csv (r'a.csv', index = False, header=True)
+    print(df)
+    fig = px.histogram(df_histogram, x="annee",y="taux_dinsertion",histfunc = "avg",labels=dict(x='Annee', y='Insertion'),color = "diplome")
+    fig.update_layout(
+        title="Evolution du taux d'insertion",
+        xaxis = dict(
+        title = "Annee",
+        tick0 = 2010,
+        dtick = 1
+        ),
         yaxis = dict(
-            type = 'log'
+        title = "Taux d'insertion"
+        ),
+        font = dict(
+            size = 18
         )
     )
-
-    fig_dict = dict(data=data, layout=layout)
-    pio.show(fig_dict, validate=False)
+    print(fig)
+    plotly.offline.plot(fig, filename='historigram.html', auto_open=True, include_plotlyjs='cdn')
