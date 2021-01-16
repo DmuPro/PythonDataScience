@@ -26,14 +26,14 @@ def loadResources(url_dict):
     """
     return {key:readUrlJson(url) for key,url in url_dict.items()}
 
-def getParcoursupData(etablissement_df_2018, etablissement_df_2019):
+def getParcoursupData(etablissements_df):
     """Renvoie une figure de type scatter_mapbox affichant le nombre de chaque formation
     
     Args:
         etablissement_df_2018 ([DataFrame]): [Données parcoursup des établissements en 2018]
         etablissement_df_2019 ([DataFrame]): [Données parcoursup des établissements en 2019]
     """
-    etablissement_df = pd.concat([etablissement_df_2018, etablissement_df_2019])
+    etablissement_df = pd.concat(etablissements_df)
     return etablissement_df
 
 def group_by_years(df, year_list):
