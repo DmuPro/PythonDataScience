@@ -7,7 +7,8 @@ def readUrlJson(url):
     """Renvoie un dataframe à partir d'une URL renvoyant un JSON
 
     Args:
-        url ([string]): [string de l'url]
+        url : string
+                Chaine contenant une url pointant vers un JSON
     """
     url = urllib.request.urlopen(url)
     data = url.read()
@@ -19,10 +20,12 @@ def loadResources(url_dict):
     """Renvoie un dictionnaire de dataframe à partir des liens fournis en entrée
 
     Args:
-        url_dict [Dict]: Clé= Donnée ciblée, Valeur= Url
+        url_dict : Dict 
+                Clé= Donnée ciblée, Valeur= Url
 
     Returns:
-        {key: Dataframe} [Dict]: Sets de données associés à un nom
+        {key: Dataframe} : Dict
+                Sets de données associés à un nom
     """
     return {key:readUrlJson(url) for key,url in url_dict.items()}
 
@@ -30,8 +33,8 @@ def getParcoursupData(etablissements_df):
     """Renvoie une figure de type scatter_mapbox affichant le nombre de chaque formation
     
     Args:
-        etablissement_df_2018 ([DataFrame]): [Données parcoursup des établissements en 2018]
-        etablissement_df_2019 ([DataFrame]): [Données parcoursup des établissements en 2019]
+        etablissement_df : [df1, df2, ...]
+                Données parcoursup des établissements en 2018
     """
     etablissement_df = pd.concat(etablissements_df)
     return etablissement_df
@@ -47,7 +50,7 @@ def getMapData(parcoursup_data):
         'g_ea_lib_vx':'first',
         'acad_mies':'first'
     })
-
+    map_data = map_data.dropna()
     map_data[['lat','lon']] = pd.DataFrame(map_data.g_olocalisation_des_formations.tolist(), index= map_data.index)
 
     # On crée un dictionnaire séparant le dataframe par dates de session
@@ -58,5 +61,6 @@ def getBarGraphData(parcoursup_data):
         'voe_tot':'sum',
         'fil_lib_voe_acc':'first',
         'session':'first',
+        'voe1':'sum',
     })
     return barGraph_data

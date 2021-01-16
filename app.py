@@ -11,19 +11,17 @@ import lib
 #
 
 url_dict = {
-    'etablissement_df_2018':'https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup-2018&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri',
-    'etablissement_df_2019':'https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri',
-    'etablissement_df_2016-2017': 'https://data.education.gouv.fr/api/records/1.0/search/?dataset=apb-voeux-de-poursuite-detude-et-admissions&q=&facet=session&facet=cod_uai&facet=g_ea_lib_vx&facet=lib_dep&facet=acad_mies&facet=lib_reg&facet=fili&facet=form_lib_voe_acc&facet=fil_lib_voe_acc',
+    'etablissement_df_2018':'https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup-2018&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri&rows=100',
+    'etablissement_df_2019':'https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri&rows=100',
+    'etablissement_df_2016-2017': 'https://data.education.gouv.fr/api/records/1.0/search/?dataset=apb-voeux-de-poursuite-detude-et-admissions&q=&facet=session&facet=cod_uai&facet=g_ea_lib_vx&facet=lib_dep&facet=acad_mies&facet=lib_reg&facet=fili&facet=form_lib_voe_acc&facet=fil_lib_voe_acc&rows=100',
 }
 datasets = lib.loadResources(url_dict)
-
 ### Parcoursup ###
 parcoursup_data = lib.getParcoursupData([datasets['etablissement_df_2016-2017'], datasets['etablissement_df_2018'], datasets['etablissement_df_2019']])
 sessions = parcoursup_data["session"].unique()
 
 map_data_sessions = lib.group_by_years(lib.getMapData(parcoursup_data.query("session == '2018' | session == '2019'")), ['2018','2019']) # Map (Nombre de voeux par établissements)
-barGraph_data_sessions = lib.group_by_years(lib.getBarGraphData(parcoursup_data), sessions) # Graphe en barre (Nombre de voeux par filière)
-
+barGraph_data_sessions = lib.group_by_years(parcoursup_data, sessions) # Graphe en barre (Nombre de voeux par filière)
 #
 ### Figures
 #
@@ -134,7 +132,7 @@ if __name__ == '__main__':
                                 min=2016,
                                 max=2019,
                                 step=None,
-                                marks={2016:'2016',2018:'2018',2019:'2019'},
+                                marks={2016:'2016',2017:'2017',2018:'2018',2019:'2019'},
                                 value=session_visible
                             ),
                             dcc.Graph(
@@ -176,7 +174,11 @@ if __name__ == '__main__':
         [Input(component_id='bargraph-year-slider', component_property='value')]
     )
     def update_graphs(input_value):
-        barGraph = px.bar(barGraph_data_sessions[f'{input_value}'], y='fil_lib_voe_acc', x='voe_tot', orientation='h')
+        if(input_value == 2016 or input_value == 2017):
+            nb_voeux = 'voe1'
+        else:
+            nb_voeux = 'voe_tot'
+        barGraph = px.bar(barGraph_data_sessions[f'{input_value}'], y='fil_lib_voe_acc', x=nb_voeux, orientation='h', height=1000)
         return [barGraph]
 
     #
