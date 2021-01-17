@@ -67,7 +67,7 @@ Nous aurions pu prendre d'autre facteur en compte tels que le salaire cependant 
 * `pip install dash==1.17.0`
 
 **Exécution du projet :** `python main.py` ou `python3 main.py`  
-**Url du dashboard :** `http://127.0.0.1:8050/`
+**Url du dashboard :** `http://127.0.0.1:8050/`  
 Le nombre de données à charger étant très grand, le chargement peut durer entre 30s et 5 minutes selon la rapidité du réseau.
 
 ## Guide développeur
