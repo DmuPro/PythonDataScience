@@ -3,6 +3,7 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
+import plotly.graph_objs as go
 
 import lib
 
@@ -11,23 +12,38 @@ import lib
 #
 
 url_dict = {
-    'etablissement_df_2018':'https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup-2018&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri&rows=100',
-    'etablissement_df_2019':'https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri&rows=100',
-    'etablissement_df_2016-2017': 'https://data.education.gouv.fr/api/records/1.0/search/?dataset=apb-voeux-de-poursuite-detude-et-admissions&q=&facet=session&facet=cod_uai&facet=g_ea_lib_vx&facet=lib_dep&facet=acad_mies&facet=lib_reg&facet=fili&facet=form_lib_voe_acc&facet=fil_lib_voe_acc&rows=100',
+    'etablissement_df_2018':'https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup-2018&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri&rows=-1',
+    'etablissement_df_2019':'https://data.education.gouv.fr/api/records/1.0/search/?dataset=fr-esr-parcoursup&q=&sort=tri&facet=session&facet=contrat_etab&facet=cod_uai&facet=g_ea_lib_vx&facet=dep_lib&facet=region_etab_aff&facet=acad_mies&facet=fili&facet=form_lib_voe_acc&facet=regr_forma&facet=fil_lib_voe_acc&facet=detail_forma&facet=tri&rows=-1',
+    'etablissement_df_2016-2017': 'https://data.education.gouv.fr/api/records/1.0/search/?dataset=apb-voeux-de-poursuite-detude-et-admissions&q=&facet=session&facet=cod_uai&facet=g_ea_lib_vx&facet=lib_dep&facet=acad_mies&facet=lib_reg&facet=fili&facet=form_lib_voe_acc&facet=fil_lib_voe_acc&rows=-1',
+    'insertionMaster': 'https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-insertion_professionnelle-master_donnees_nationales&q=&facet=annee&facet=diplome&facet=situation&facet=genre&facet=disciplines&facet=cle_disc&rows=10',
+    'insertionDoctorat':'https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=insertion-professionnelle-des-diplomes-de-doctorat-par-ensemble&q=&sort=-annee&facet=annee&facet=situation&facet=disca&rows=10',
+    'insertionDUT':'https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-insertion_professionnelle-dut_donnees_nationales&q=&facet=annee&facet=diplome&facet=situation&facet=genre&facet=disciplines&facet=secteur_disciplinaire&facet=cle_disc&rows=10',
+    'insertionLicencePro':'https://data.enseignementsup-recherche.gouv.fr/api/records/1.0/search/?dataset=fr-esr-insertion_professionnelle-lp&q=&facet=annee&facet=diplome&facet=numero_de_l_etablissement&facet=etablissement&facet=academie&facet=domaine&facet=code_de_la_discipline&facet=discipline&facet=situation&facet=cle_etab&facet=cle_disc&facet=id_paysage&rows=10'
 }
+
 datasets = lib.loadResources(url_dict)
+
 ### Parcoursup ###
 parcoursup_data = lib.getParcoursupData([datasets['etablissement_df_2016-2017'], datasets['etablissement_df_2018'], datasets['etablissement_df_2019']])
 sessions = parcoursup_data["session"].unique()
 
 map_data_sessions = lib.group_by_years(lib.getMapData(parcoursup_data.query("session == '2018' | session == '2019'")), ['2018','2019']) # Map (Nombre de voeux par établissements)
 barGraph_data_sessions = lib.group_by_years(parcoursup_data, sessions) # Graphe en barre (Nombre de voeux par filière)
+
+## Données d'insertion ##
+insertion_data = lib.getInsertionData([datasets['insertionMaster'],datasets['insertionDUT'],datasets['insertionLicencePro'],datasets['insertionDoctorat']])
+
+line_data = lib.getDisciplineData(insertion_data)
+disciplines = line_data['discipline'].unique()
+lineGraph_data = lib.group_by_discipline(line_data,disciplines)
+
+
 #
 ### Figures
 #
 
 session_visible = 2018
-
+discipline_active = "Droit"
 # Map (Nombre de voeux par établissements)
 
 map_fig = px.scatter_mapbox(
@@ -52,6 +68,60 @@ bar_graph_fig = px.bar(
     x='voe_tot',
     height=500,
     orientation='h'
+)
+
+# Diagramme en ligne (Evolution du taux d'insertion de chaque discipline)
+traces = [go.Scatter(
+x = discipline['annee'],
+y = discipline['taux_dinsertion'],
+mode = 'lines',
+text = discipline['diplome'] + " " + discipline['discipline'],
+name = discipline['discipline'].iloc[0],
+) for discipline in lineGraph_data]
+
+data = traces
+layout = go.Layout(title="Taux_insertion/Annee",
+                    xaxis=dict(
+                        title='annee',
+                        ticklen=5,
+                        zeroline=False,
+                        gridwidth=2,
+                    ),
+                    yaxis=dict(
+                        title='insertion',
+                        ticklen=5,
+                        zeroline=False,
+                        gridwidth=2,
+                    ))
+
+fig = go.Figure(data = data,layout = layout)
+
+#Diagramme camembert (Représentation du nombre de voeux par formation pour déterminer sa popularité)
+pieChart_data = lib.filterHighVal(barGraph_data_sessions,session_visible)
+print(pieChart_data)
+fig = px.pie(pieChart_data,
+            values='voe_tot', 
+            names='fil_lib_voe_acc', 
+            title='Insertion par domaine'
+            )
+fig.show()
+#
+
+#Histogramme représentant l'évolution du taux d'insertion d'une discipline
+fig = px.histogram(insertion_data.loc[insertion_data['discipline'] == discipline_active], x="annee",y="taux_dinsertion",histfunc = "avg")
+fig.update_layout(
+    title="Evolution du taux d'insertion de la discipline suivante : "+discipline_active,
+    xaxis = dict(
+    title = "Annee",
+    tick0 = 2010,
+    dtick = 1
+    ),
+    yaxis = dict(
+    title = "Taux d'insertion"
+    ),
+    font = dict(
+        size = 18
+    )
 )
 
 #
@@ -132,7 +202,7 @@ if __name__ == '__main__':
                                 min=2016,
                                 max=2019,
                                 step=None,
-                                marks={2016:'2016',2017:'2017',2018:'2018',2019:'2019'},
+                                marks={2016:'2016',2018:'2018',2019:'2019'},
                                 value=session_visible
                             ),
                             dcc.Graph(
@@ -174,11 +244,7 @@ if __name__ == '__main__':
         [Input(component_id='bargraph-year-slider', component_property='value')]
     )
     def update_graphs(input_value):
-        if(input_value == 2016 or input_value == 2017):
-            nb_voeux = 'voe1'
-        else:
-            nb_voeux = 'voe_tot'
-        barGraph = px.bar(barGraph_data_sessions[f'{input_value}'], y='fil_lib_voe_acc', x=nb_voeux, orientation='h', height=1000)
+        barGraph = px.bar(barGraph_data_sessions[f'{input_value}'], y='fil_lib_voe_acc', x='voe_tot', orientation='h')
         return [barGraph]
 
     #
