@@ -77,6 +77,7 @@ Fichier main:
     - Après avoir initialisé les données nécessaires à la visualisation, nous créons les figures:
     
         -Map:
+        Prends en paramètre la dataframe de la session visible, le nom de chaque filière et le nombre total de voeux.
 
         -Diagramme en barres:
         Prends en paramètre la dataframe de la session visible, le nom de chaque filière dans l'axe y et le nombre total de voeux dans l'axe X.
