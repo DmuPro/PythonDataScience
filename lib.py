@@ -65,7 +65,7 @@ def getInsertionData(insertion_data):
     """Renvoie une figure de type scatter_mapbox affichant le nombre de chaque formation
     
     Args:
-        insertion_data ([DataFrame]) : [DOnnées des taux d'insertion des masters, licences pros, DUT et doctorats]
+        insertion_data ([DataFrame]) : [Données des taux d'insertion des masters, licences pros, DUT et doctorats]
     """
     insertion_data = pd.concat(insertion_data)
     #On remplit les colonnes vides par leurs valeurs correspondantes
@@ -88,10 +88,28 @@ def getDisciplineData(insertion_data):
     return discipline_data
 
 def group_by_discipline(insertion_data,disciplines):
+    """[summary]
+
+    Args:
+        insertion_data ([Dataframe de l'insertion]): [Données des taux d'insertions des ]
+        disciplines ([type]): [description]
+
+    Returns:
+        [Dictionnaire]: [Dictionnaire de dataframe : clé = discipline, valeur = dataframe de la discipline]
+    """
     return [insertion_data.query(f'discipline=="{discipline}"') for discipline in disciplines]
 
 
 def filterHighVal(insertion_data,session_visible):
+    """[summary]
+
+    Args:
+        insertion_data ([Dictionnaire de dataframe]): [Dictionnaire contenant les dataframes des différentes disciplines]
+        session_visible ([integer]): [La session visible sur le dashboard]
+
+    Returns:
+        [DataFrame]: [Renvoie une dataframe contenant les vingts premières disicplines contenant le plus de voeux]
+    """
     data = insertion_data[f'{session_visible}'].groupby(['fil_lib_voe_acc']).aggregate({
         'fil_lib_voe_acc':'first',
         'voe_tot':'sum'
