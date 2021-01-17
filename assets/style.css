@@ -10,16 +10,19 @@ li{
     margin-top: 10px;
     margin-bottom: 10px;
     list-style-type: square;
-    list-style: inside;
+    list-style: outside;
 }
 
 #sidebar{
     background-color: #4A154B;
     color: white;
-    text-align: center;
-    width: 250px;
+    padding: 20px;
 }
 
 #sidebar a{
     color: #EEEEFF;
+}
+
+#sidebar h2{
+    text-align: center;
 }
