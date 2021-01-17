@@ -102,11 +102,11 @@ layout = go.Layout(title="Taux_insertion/Annee",
 lineGraph = go.Figure(data = data,layout = layout)
 
 #Diagramme camembert (Représentation du nombre de voeux par formation pour déterminer sa popularité)
-pieChart_data = lib.filterHighVal(barGraph_data_sessions,session_visible)
+pieChart_data = lib.filterHighVal(barGraph_data_sessions)
 pieChart = px.pie(pieChart_data,
             values='voe_tot', 
             names='fil_lib_voe_acc', 
-            title='Insertion par domaine'
+            title='Top 20 des filières ayant le plus de voeux'
             )
 
 #Histogramme représentant l'évolution du taux d'insertion d'une discipline

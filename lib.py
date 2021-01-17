@@ -5,7 +5,6 @@ import json
 
 def readUrlJson(url):
     """Renvoie un dataframe à partir d'une URL renvoyant un JSON
-
     Args:
         url ([string]): [string de l'url]
     """
@@ -17,10 +16,8 @@ def readUrlJson(url):
 
 def loadResources(url_dict):
     """Renvoie un dictionnaire de dataframe à partir des liens fournis en entrée
-
     Args:
         url_dict [Dict]: Clé= Donnée ciblée, Valeur= Url
-
     Returns:
         {key: Dataframe} [Dict]: Sets de données associés à un nom
     """
@@ -89,32 +86,26 @@ def getDisciplineData(insertion_data):
 
 def group_by_discipline(insertion_data,disciplines):
     """[summary]
-
     Args:
         insertion_data ([Dataframe de l'insertion]): [Données des taux d'insertions des ]
         disciplines ([type]): [description]
-
     Returns:
         [Dictionnaire]: [Dictionnaire de dataframe : clé = discipline, valeur = dataframe de la discipline]
     """
     return [insertion_data.query(f'discipline=="{discipline}"') for discipline in disciplines]
 
 
-def filterHighVal(insertion_data,session_visible):
+def filterHighVal(parcoursupData):
     """[summary]
-
     Args:
-        insertion_data ([Dictionnaire de dataframe]): [Dictionnaire contenant les dataframes des différentes disciplines]
-        session_visible ([integer]): [La session visible sur le dashboard]
-
+        parcoursupData ([Dictionnaire de dataframe]): [Dictionnaire contenant les dataframes des différentes disciplines]
     Returns:
         [DataFrame]: [Renvoie une dataframe contenant les vingts premières disicplines contenant le plus de voeux]
     """
-    data = insertion_data[f'{session_visible}'].groupby(['fil_lib_voe_acc']).aggregate({
+    parcourSupDataFormat = pd.concat(parcoursupData).query("voe_tot != 'inconnu'")
+    parcourSupDataFormat = parcourSupDataFormat.assign(voe_tot=parcourSupDataFormat['voe_tot'].astype('int64'))
+    data = parcourSupDataFormat.groupby(['fil_lib_voe_acc']).aggregate({
         'fil_lib_voe_acc':'first',
         'voe_tot':'sum'
     })
     return data.sort_values('voe_tot',ascending=False).head(20)
-
-
-
