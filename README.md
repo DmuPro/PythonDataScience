@@ -4,7 +4,7 @@ Mini-Projet visant à fournir des représentations graphiques de données publiq
 > Déterminer la filière la plus populaire en france et voir le lien de cette popularité avec le taux d'insertion
 
 ## Rapport d'analyse
-/!\ Afin d'avoir des données sur le plus de formation possible nous avons récupéré différentes open-datas  
+/!\ Afin d'avoir des données sur le plus de formation possible nous avons récupéré différents open-datas, le programme est très ralenti dû à l'importante quantité de données à traiter.
 
 Afin de répondre à notre problématique nous avons élaborer:
 * Un graphique camembert et un graphique à barres représentant le nombre de voeux par filière
